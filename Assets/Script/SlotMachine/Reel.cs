@@ -1,73 +1,55 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Reel : MonoBehaviour
 {
-    [Header("Spin Settings")]
-    public float speed = 20f;
-    public float deceleration = 10f;
+    public float speed = 10f; // vitesse de défilement
+    public RectTransform[] items; // tes 4 éléments UI
+    public float itemHeight = 2f; // hauteur d’un élément
 
-    [Header("State")]
-    public bool isSpinning = false;
-    private bool stopping = false;
-
-    [Header("Movement")]
-    public float resetY = -10f;
-    public float startY = 10f;
+    private bool isScrolling = true;
 
     void Update()
     {
-        if (isSpinning)
-        {
-            transform.Translate(Vector3.down * speed * Time.deltaTime);
-            Loop();
-        }
+        if (!isScrolling) return;
 
-        if (stopping)
+        foreach (RectTransform item in items)
         {
-            transform.Translate(Vector3.down * speed * Time.deltaTime);
-            speed -= deceleration * Time.deltaTime;
+            // Descendre
+            item.anchoredPosition -= new Vector2(0, speed * Time.deltaTime);
 
-            if (speed <= 0)
+            // Si l’élément sort en bas → on le remet en haut
+            if (item.anchoredPosition.y < -itemHeight * 2)
             {
-                speed = 0;
-                stopping = false;
-                isSpinning = false;
-                SnapToGrid();
+                MoveToTop(item);
             }
-
-            Loop();
         }
     }
 
-    void Loop()
+    void MoveToTop(RectTransform item)
     {
-        if (transform.position.y <= resetY)
+        // Trouver l’élément le plus haut
+        float highestY = items[0].anchoredPosition.y;
+
+        foreach (RectTransform i in items)
         {
-            Vector3 pos = transform.position;
-            pos.y = startY;
-            transform.position = pos;
+            if (i.anchoredPosition.y > highestY)
+                highestY = i.anchoredPosition.y;
         }
+
+        // Replacer au-dessus
+        item.anchoredPosition = new Vector2(
+            item.anchoredPosition.x,
+            highestY + itemHeight
+        );
     }
 
-    public void StartSpin()
+    public void StopScroll()
     {
-        speed = 20f;
-        isSpinning = true;
-        stopping = false;
+        isScrolling = false;
     }
 
-    public void StopSpin()
+    public void StartScroll()
     {
-        stopping = true;
-    }
-
-    void SnapToGrid()
-    {
-        float symbolHeight = 1f; // adapte � ton jeu
-
-        float y = transform.position.y;
-        float snappedY = Mathf.Round(y / symbolHeight) * symbolHeight;
-
-        transform.position = new Vector3(transform.position.x, snappedY, 0);
+        isScrolling = true;
     }
 }
