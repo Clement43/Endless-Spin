@@ -1,73 +1,118 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Reel : MonoBehaviour
 {
-    [Header("Spin Settings")]
-    public float speed = 20f;
-    public float deceleration = 10f;
+    public float speed = 50f;
+    public float deceleration = 100f;
+    public RectTransform[] items;
+    public float itemHeight = 2f;
 
-    [Header("State")]
-    public bool isSpinning = false;
-    private bool stopping = false;
+    private RectTransform result;
 
-    [Header("Movement")]
-    public float resetY = -10f;
-    public float startY = 10f;
+    private bool isStopping = false;
+    private bool isScrolling = true;
+    private bool isProgessToStop = false;
 
     void Update()
     {
-        if (isSpinning)
-        {
-            transform.Translate(Vector3.down * speed * Time.deltaTime);
-            Loop();
-        }
+        if (!isScrolling && !isStopping) return;
 
-        if (stopping)
+        float currentSpeed = speed;
+
+        // Ralentissement
+        if (isProgessToStop)
         {
-            transform.Translate(Vector3.down * speed * Time.deltaTime);
             speed -= deceleration * Time.deltaTime;
-
-            if (speed <= 0)
-            {
-                speed = 0;
-                stopping = false;
-                isSpinning = false;
-                SnapToGrid();
-            }
-
-            Loop();
+            speed = Mathf.Max(speed, 0);
+            currentSpeed = speed;
         }
-    }
 
-    void Loop()
-    {
-        if (transform.position.y <= resetY)
+        foreach (RectTransform item in items)
         {
-            Vector3 pos = transform.position;
-            pos.y = startY;
-            transform.position = pos;
+            item.anchoredPosition -= new Vector2(0, currentSpeed * Time.deltaTime);
+
+            // Boucle infinie
+            if (item.anchoredPosition.y < -itemHeight * 2)
+            {
+                MoveToTop(item);
+            }
+        }
+
+        // Quand on est presque arrêté → snap propre
+        if (isProgessToStop && speed <= 0)
+        {
+            SnapToClosest();
         }
     }
 
-    public void StartSpin()
+    void MoveToTop(RectTransform item)
     {
-        speed = 20f;
-        isSpinning = true;
-        stopping = false;
+        float highestY = items[0].anchoredPosition.y;
+
+        foreach (RectTransform i in items)
+        {
+            if (i.anchoredPosition.y > highestY)
+                highestY = i.anchoredPosition.y;
+        }
+
+        item.anchoredPosition = new Vector2(item.anchoredPosition.x, highestY + itemHeight);
     }
 
-    public void StopSpin()
+    // 🎯 Alignement parfait
+    void SnapToClosest()
     {
-        stopping = true;
+        RectTransform closest = items[0];
+        float closestDistance = Mathf.Abs(items[0].anchoredPosition.y);
+
+        foreach (RectTransform item in items)
+        {
+            float distance = Mathf.Abs(item.anchoredPosition.y);
+
+            if (distance <= closestDistance)
+            {
+                closestDistance = distance;
+                closest = item;
+                result = item;
+                isStopping = true;
+            }
+        }
+
+        // Décalage pour aligner sur Y = 0 (ligne centrale)
+        float offset = closest.anchoredPosition.y;
+
+        foreach (RectTransform item in items)
+        {
+            item.anchoredPosition -= new Vector2(0, offset);
+        }
     }
 
-    void SnapToGrid()
+    // 🎮 Appelé quand le joueur stop
+    public void StopScroll()
     {
-        float symbolHeight = 1f; // adapte � ton jeu
+        isProgessToStop = true;
+    }
 
-        float y = transform.position.y;
-        float snappedY = Mathf.Round(y / symbolHeight) * symbolHeight;
+    public void StartScroll()
+    {
+        speed = 50f;
+        isScrolling = true;
+        isStopping = false;
+        isProgessToStop = false;
+    }
 
-        transform.position = new Vector3(transform.position.x, snappedY, 0);
+    public bool GetIsToProgessToScroll() {
+        return isProgessToStop;
+    }
+
+    public RectTransform GetResult() {
+        return result;
+    }
+
+    public void ResetResult() {
+        result = null;
+    }
+
+    public bool GetIsStopping() {
+        return isStopping;
     }
 }
