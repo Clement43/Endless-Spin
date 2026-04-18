@@ -7,6 +7,7 @@ public class Levier : MonoBehaviour
 {
     public GameObject imageOff;
     public GameObject imageOn;
+    public Player player;
 
     public Reel[] reels;
 
@@ -19,6 +20,8 @@ public class Levier : MonoBehaviour
     {
         StopAllCoroutines();
         if (IsCanStart()) {
+            //Insert coin in slot machine
+            player.AddCash(-1);
             StartCoroutine(Anim());
         }
     }
@@ -33,7 +36,7 @@ public class Levier : MonoBehaviour
         imageOff.SetActive(false);
         imageOn.SetActive(true);
 
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.75f);
 
         imageOn.SetActive(false);
         imageOff.SetActive(true);
