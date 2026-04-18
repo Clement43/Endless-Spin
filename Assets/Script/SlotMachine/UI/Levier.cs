@@ -10,6 +10,7 @@ public class Levier : MonoBehaviour
     public Player player;
 
     public Reel[] reels;
+    public ProgressBar progressBar;
 
     void Start()
     {
@@ -23,6 +24,9 @@ public class Levier : MonoBehaviour
             //Insert coin in slot machine
             player.AddCash(-1);
             StartCoroutine(Anim());
+            
+            // Add time to the progress bar when the levier is clicked
+            progressBar.AddTimeToProgressBar();
         }
     }
 
