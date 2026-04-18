@@ -1,16 +1,18 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Linq;
+using UnityEngine;
 
 public class Reel : MonoBehaviour
 {
     public float speed = 50f;
     public float deceleration = 100f;
-    public RectTransform[] items;
+    public Case[] casesSpin;
     public float itemHeight = 2f;
 
-    private RectTransform result;
+    private Case result;
 
-    private bool isStopping = false;
-    private bool isScrolling = true;
+    private bool isStopping = true;
+    private bool isScrolling = false;
     private bool isProgessToStop = false;
 
     void Update()
@@ -27,19 +29,19 @@ public class Reel : MonoBehaviour
             currentSpeed = speed;
         }
 
-        foreach (RectTransform item in items)
+        foreach (Case caseSpin in casesSpin)
         {
-            item.anchoredPosition -= new Vector2(0, currentSpeed * Time.deltaTime);
+            caseSpin.GetRectTransform().anchoredPosition -= new Vector2(0, currentSpeed * Time.deltaTime);
 
             // Boucle infinie
-            if (item.anchoredPosition.y < -itemHeight * 2)
+            if (caseSpin.GetRectTransform().anchoredPosition.y < -itemHeight * 2)
             {
-                MoveToTop(item);
+                MoveToTop(caseSpin.GetRectTransform());
             }
         }
 
         // Quand on est presque arrêté → snap propre
-        if (isProgessToStop && speed <= 0)
+        if (isProgessToStop && speed <= 0 && !isStopping)
         {
             SnapToClosest();
         }
@@ -47,12 +49,12 @@ public class Reel : MonoBehaviour
 
     void MoveToTop(RectTransform item)
     {
-        float highestY = items[0].anchoredPosition.y;
+        float highestY = casesSpin[0].GetRectTransform().anchoredPosition.y;
 
-        foreach (RectTransform i in items)
+        foreach (Case caseSpin in casesSpin)
         {
-            if (i.anchoredPosition.y > highestY)
-                highestY = i.anchoredPosition.y;
+            if (caseSpin.GetRectTransform().anchoredPosition.y > highestY)
+                highestY = caseSpin.GetRectTransform().anchoredPosition.y;
         }
 
         item.anchoredPosition = new Vector2(item.anchoredPosition.x, highestY + itemHeight);
@@ -61,28 +63,15 @@ public class Reel : MonoBehaviour
     // 🎯 Alignement parfait
     void SnapToClosest()
     {
-        RectTransform closest = items[0];
-        float closestDistance = Mathf.Abs(items[0].anchoredPosition.y);
 
-        foreach (RectTransform item in items)
-        {
-            float distance = Mathf.Abs(item.anchoredPosition.y);
-
-            if (distance <= closestDistance)
-            {
-                closestDistance = distance;
-                closest = item;
-                result = item;
-                isStopping = true;
-            }
-        }
-
+         result = casesSpin.OrderBy(caseSpin => Mathf.Abs(caseSpin.GetRectTransform().anchoredPosition.y)).First();
+        isStopping = true;
         // Décalage pour aligner sur Y = 0 (ligne centrale)
-        float offset = closest.anchoredPosition.y;
+        float offset = result.GetRectTransform().anchoredPosition.y;
 
-        foreach (RectTransform item in items)
+        foreach (Case caseSpin in casesSpin)
         {
-            item.anchoredPosition -= new Vector2(0, offset);
+            caseSpin.GetRectTransform().anchoredPosition -= new Vector2(0, offset);
         }
     }
 
@@ -104,7 +93,7 @@ public class Reel : MonoBehaviour
         return isProgessToStop;
     }
 
-    public RectTransform GetResult() {
+    public Case GetResult() {
         return result;
     }
 
