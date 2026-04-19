@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 public class ProgressBar : MonoBehaviour
 {
-    private Slider slider;
+    public Slider slider;
     private float duration = 30f;
     private float timeAddedPercent = 20;
     private bool isGameOver = false;
@@ -12,8 +12,10 @@ public class ProgressBar : MonoBehaviour
     [SerializeField] private float warningTime = 5f;
     private float timeAdded = 10f;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    // Awake() is called earlier than Start() and runs first before anything else.
+    // Awake() is used for initialization that other scripts depend on 
+    // Awake() is needed so timeRemaining gets initialized before othe scripts begin using it.
+    void Awake()
     {
         slider = GetComponent<Slider>();
         timeRemaining = duration;
@@ -67,5 +69,10 @@ public class ProgressBar : MonoBehaviour
         timeRemaining += timeRemaining * (timeAddedPercent/100f);
         // Ensures the value is between 0 and max time (duration)
         timeRemaining = Mathf.Clamp(timeRemaining, 0f, duration);
+    }
+
+    public float GetTimeRemaining()
+    {
+        return timeRemaining;
     }
 }
